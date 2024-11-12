@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オンラインカードゲーム</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style2.css">
+</head>
+<body>
+    <div id="start-screen">
+        <h1>オンラインカードゲーム</h1>
+        <button id="start-button">ゲーム開始</button>
+    </div>
+    
+    <div id="game-board" style="display: none;">
+        <h2>ターン <span id="turn-count">0</span> / 5</h2>
+        
+        <div id="hand"></div>
+        <button id="draw-five" onclick="drawInitialCards()">カードを5枚引く</button>
+        <button id="draw-one" onclick="drawOneCard()" style="display: none;">カードを1枚引く</button>
+        
+        <div id="discard-area" style="display: none;">
+            <h3>捨てるカード</h3>
+            <div id="discard-card"></div>
+            <textarea id="discard-reason" placeholder="このカードを捨てる理由を記入してください"></textarea>
+            <button onclick="confirmDiscard()">確定して捨てる</button>
+        </div>
+    </div>
+
+    <div id="end-screen" style="display: none;">
+        <h2>最終手札の確認</h2>
+        <div id="final-hand"></div>
+        <button id="submit-button" onclick="submitHand()">手札を確定する</button>
+    </div>
+
+    <div id="submission-screen" style="display: none;">
+        <h2>ゲーム終了！</h2>
+        <h3>あなたの最終手札</h3>
+        <div id="submission-details"></div>
+        <button onclick="resetGame()">新しいゲームを始める</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
