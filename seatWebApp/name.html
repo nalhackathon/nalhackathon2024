@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+  <link rel="stylesheet" href="css.css">
+
+</head>
+
+<body>
+
+<!-- 入力フォーム -->
+<!-- <form action="#" id=" textbox"> -->
+<form id="textbox">
+  ユーザー名:
+  <input id="username" name="username">
+  <button id="testbutton" class="hidden">送信</button>
+  <br>
+</form>
+
+<script>
+
+// テキストボックスのDOMを取得
+  const username = document.getElementById("username");
+  // ボタンのDOMを取得
+  const testbutton = document.getElementById("testbutton");
+
+  // testbutton.addEventListener('click', () => {
+  document.getElementById('textbox').addEventListener('submit', function(event) {
+    
+    event.preventDefault(); // フォームの通常の送信を停止
+    const text = username.value;
+    console.log(text);
+
+    if(text) {
+      window.location.href = 'yoyaku.html'; // 画面の遷移
+
+    } else {
+
+      alert('エラー');
+    }
+
+  })
+ </script>
+
+</body>
+</html>

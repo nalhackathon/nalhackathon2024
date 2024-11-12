@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カードゲーム</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="start-screen">
+        <h1>カードゲーム</h1>
+        <button onclick="startGame()">ゲーム開始</button>
+    </div>
+
+    <div id="game-board" style="display: none;">
+        <h2>ターン数: <span id="turn-count">0</span> / 5</h2>
+        <div id="hand">
+            <h3>手札</h3>
+            <ul id="card-list"></ul>
+        </div>
+        <button onclick="drawCard()">カードを引く</button>
+    </div>
+
+    <div id="end-screen" style="display: none;">
+        <h2>ゲーム終了</h2>
+        <h3>最終手札</h3>
+        <ul id="final-hand"></ul>
+        <button onclick="resetGame()">もう一度プレイ</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

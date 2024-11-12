@@ -1,0 +1,54 @@
+/* タイトル画面へ戻るボタンを左上に配置 */
+#back-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+#back-button:hover {
+    background-color: #45a049;
+}
+
+/* 中央に配置するコンテンツ */
+#center-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+}
+
+/* ロビー作成、ロビー参加ボタン */
+#lobby-options {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+#lobby-options button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+}
+
+#lobby-options #create-lobby-button {
+    background-color: #007bff;
+    color: white;
+}
+
+#lobby-options #join-lobby-button {
+    background-color: #28a745;
+    color: white;
+}
+
+#lobby-options button:hover {
+    opacity: 0.9;
+}

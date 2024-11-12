@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+  <link rel="stylesheet" href="css.css">
+
+</head>
+
+<body>
+
+<!-- 入力フォーム -->
+<form action="#" id=" textbox">
+  ユーザー名:
+  <input id="username" name="username">
+  <button id="testbutton" class="hidden" href="cancel.html" >送信</button>
+  <br>
+</form>
+
+<script>
+
+// テキストボックスのDOMを取得
+  const username = document.getElementById("username");
+  // ボタンのDOMを取得
+  const testbutton = document.getElementById("testbutton");
+
+  testbutton.addEventListener('click', () => {
+
+    const text = username.value;
+    console.log(text);
+
+    if(text) {//textの判断
+        // 文字がある場合
+        testbutton.setAttribute('href', 'yoyaku.html');
+      window.location.href = 'https://www.google.co.jp/'; // 画面の遷移
+        
+    } else {// 文字がない場合
+
+      alert('エラー');
+    }
+
+  })
+ </script>
+
+</body>
+</html>
