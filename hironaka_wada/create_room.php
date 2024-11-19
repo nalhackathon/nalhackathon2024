@@ -19,7 +19,7 @@ try {
     $stmt->execute([':game_id' => $game_id]);
 
     // `room`テーブルに新しいルームを作成し、作成者情報を保存
-    $stmt = $db->prepare("INSERT INTO room2 (roomID, creater, state) VALUES (:room_id, :creater, :state)");
+    $stmt = $db->prepare("INSERT INTO room2 (roomID, creater, participant, state) VALUES (:room_id, :creater, :creater, :state)");
     $stmt->execute([':room_id' => $game_id, ':creater' => $username, ':state' => "wait"]);
 
     // `players`テーブルに作成者を追加

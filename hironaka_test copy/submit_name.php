@@ -4,59 +4,22 @@
     <meta charset="UTF-8">
     <title>カードゲーム</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f0f0;
-        }
-        h3 {
-            text-align: center;
-            margin-top: 20px;
-        }
-        form {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        form input, form button {
-            margin: 0 5px;
-            padding: 10px;
-            font-size: 16px;
-        }
         #container {
             display: flex;
-            justify-content: space-around;
-            padding: 20px;
+            justify-content: space-between;
         }
         #card-table {
             width: 60%;
-            border-collapse: collapse;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        #card-table th, #card-table td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: center;
         }
         #selected-card {
             width: 35%;
-            border: 1px solid #ddd;
-            padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid #000;
+            padding: 10px;
+            height: auto;
         }
         #reason-input {
             margin-top: 10px;
             width: 100%;
-            padding: 10px;
-            font-size: 16px;
-        }
-        #save-reason-button {
-            margin-top: 10px;
-            padding: 10px;
-            font-size: 16px;
         }
     </style>
     <script>
@@ -76,7 +39,8 @@
     <h3>名前を入力してください</h3>
     <!-- 名前入力フォーム -->
     <form method="POST" action="">
-        <input type="text" id="username" name="username" placeholder="名前" required>
+        <label for="username">名前:</label>
+        <input type="text" id="username" name="username" required>
         <button type="submit">送信</button>
     </form>
 
@@ -105,12 +69,24 @@
         $randomNumbers = implode(',', $randomNumbersArray);
 
         // ユーザー名をDBに挿入
-        $insertSql = "INSERT INTO test (username, card) VALUES (:username, :card)";
+        $insertSql = "INSERT INTO test (username, card, `No.`, active) VALUES (:username, :card, :no, :active)";
         $insertStmt = $db->prepare($insertSql);
 
+        // 現在の最大No.を取得して次のNo.を決定
+        $maxNoSql = "SELECT MAX(`No.`) AS max_no FROM test";
+        $maxNoStmt = $db->query($maxNoSql);
+        $maxNoResult = $maxNoStmt->fetch(PDO::FETCH_ASSOC);
+        $nextNo = $maxNoResult['max_no'] + 1;
+
         try {
-            $insertStmt->execute([':username' => $username, ':card' => $randomNumbers]);
+            $insertStmt->execute([':username' => $username, ':card' => $randomNumbers, ':no' => $nextNo, ':active' => 'false']);
             echo "新しいユーザーが作成され、カード情報が保存されました。<br>";
+
+            // No.が1のプレイヤーのactiveをtrueにする
+            if ($nextNo == 1) {
+                $updateActiveSql = "UPDATE test SET active = 'true' WHERE `No.` = 1";
+                $db->exec($updateActiveSql);
+            }
         } catch (PDOException $e) {
             echo "エラー: " . $e->getMessage();
         }
@@ -160,6 +136,34 @@
             try {
                 $updateStmt->execute([':discard' => $newDiscard, ':reason' => $newReason, ':card' => $newCardList, ':username' => $username]);
                 echo "メモが保存され、カードが捨てられ、新しいカードが補充されました。<br>";
+
+                // 次のプレイヤーに順番を移す
+                $currentNoSql = "SELECT `No.` FROM test WHERE username = :username";
+                $currentNoStmt = $db->prepare($currentNoSql);
+                $currentNoStmt->execute([':username' => $username]);
+                $currentNo = $currentNoStmt->fetchColumn();
+
+                $nextNo = $currentNo + 1;
+
+                // 現在のプレイヤーのactiveをfalseにする
+                $updateActiveSql = "UPDATE test SET active = 'false' WHERE `No.` = :currentNo";
+                $updateActiveStmt = $db->prepare($updateActiveSql);
+                $updateActiveStmt->execute([':currentNo' => $currentNo]);
+
+                // 次のプレイヤーのactiveをtrueにする
+                $updateNextActiveSql = "UPDATE test SET active = 'true' WHERE `No.` = :nextNo";
+                $updateNextActiveStmt = $db->prepare($updateNextActiveSql);
+                $updateNextActiveStmt->execute([':nextNo' => $nextNo]);
+
+                // すべてのプレイヤーのactiveがfalseの場合、1番のプレイヤーのactiveをtrueにする
+                $checkAllInactiveSql = "SELECT COUNT(*) FROM test WHERE active = 'true'";
+                $checkAllInactiveStmt = $db->query($checkAllInactiveSql);
+                $activeCount = $checkAllInactiveStmt->fetchColumn();
+
+                if ($activeCount == 0) {
+                    $resetActiveSql = "UPDATE test SET active = 'true' WHERE `No.` = 1";
+                    $db->exec($resetActiveSql);
+                }
             } catch (PDOException $e) {
                 echo "エラー: " . $e->getMessage();
             }
@@ -169,7 +173,7 @@
     }
 
     // 現在の username と card を表示
-    $displaySql = "SELECT username, card, discard, reason, reason2 FROM test";
+    $displaySql = "SELECT `No.`, username, card, discard, reason, reason2, active FROM test";
     $displayStmt = $db->query($displaySql);
     $results = $displayStmt->fetchAll();
     ?>
@@ -177,8 +181,9 @@
     <h3>現在のユーザーとカード情報</h3>
     <div id="container">
         <!-- 左側：カードテーブル -->
-        <table id="card-table">
+        <table border="1" id="card-table">
             <tr>
+                <th>番号</th>
                 <th>ユーザー名</th>
                 <th>カード</th>
                 <th>捨てたカード</th>
@@ -187,6 +192,7 @@
             </tr>
             <?php foreach ($results as $row): ?>
                 <tr>
+                    <td><?= htmlspecialchars($row['No.']) ?></td>
                     <td>
                         <?= htmlspecialchars($row['username']) ?>
                         <?php if ($row['username'] === $username && count(explode(',', $row['discard'])) >= 5): ?>
@@ -195,12 +201,19 @@
                     </td>
                     <td>
                         <?php if ($row['username'] === $username): ?>
-                            <?php foreach (explode(',', $row['card']) as $card): ?>
-                                <button onclick="displaySelectedCard('<?= htmlspecialchars($card) ?>')"><?= htmlspecialchars($card) ?></button>
-                            <?php endforeach; ?>
+                            <?php if ($row['active'] === "true") : ?>
+                                <?php foreach (explode(',', $row['card']) as $card): ?>
+                                    <button onclick="displaySelectedCard('<?= htmlspecialchars($card) ?>')"><?= htmlspecialchars($card) ?></button>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <?php foreach (explode(',', $row['card']) as $card): ?>
+                                    <button><?= htmlspecialchars($card) ?></button>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         <?php else: ?>
+                            <!-- 他のユーザーのカードは見えないようにする -->
                             <?php foreach (explode(',', $row['card']) as $card): ?>
-                                <span><?= htmlspecialchars($card) ?></span>
+                                <span>***</span>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </td>
