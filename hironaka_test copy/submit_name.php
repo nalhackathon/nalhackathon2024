@@ -33,6 +33,22 @@
         function openNewWindow() {
             window.open('new_window.php', '_blank', 'width=600,height=400');
         }
+
+        // 定期的にサーバーにリクエストを送信してデータベースの変更をチェック
+        setInterval(function() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'check_db_change.php', true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.changed) {
+                        console.log('update');
+                        location.reload();
+                    }
+                }
+            };
+            xhr.send();
+        }, 5000); // 5秒ごとにチェック
     </script>
 </head>
 <body>
@@ -53,6 +69,7 @@
 
     try {
         $db = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     } catch (PDOException $e) {
         echo "データベース接続エラー: " . $e->getMessage();
         exit();
@@ -87,6 +104,10 @@
                 $updateActiveSql = "UPDATE test SET active = 'true' WHERE `No.` = 1";
                 $db->exec($updateActiveSql);
             }
+
+            // フォームの再送信を防ぐためにリダイレクト
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit();
         } catch (PDOException $e) {
             echo "エラー: " . $e->getMessage();
         }
@@ -164,6 +185,10 @@
                     $resetActiveSql = "UPDATE test SET active = 'true' WHERE `No.` = 1";
                     $db->exec($resetActiveSql);
                 }
+
+                // フォームの再送信を防ぐためにリダイレクト
+                header("Location: " . $_SERVER['PHP_SELF']);
+                exit();
             } catch (PDOException $e) {
                 echo "エラー: " . $e->getMessage();
             }
