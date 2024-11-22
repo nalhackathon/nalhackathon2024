@@ -84,14 +84,15 @@ DB名：hackathon
 +----------+-------------+------+-----+---------+-------+
 
 > show columns from test;
-+----------+-------------+------+-----+---------+-------+
-| Field    | Type        | Null | Key | Default | Extra |
-+----------+-------------+------+-----+---------+-------+
-| username | varchar(50) | NO   | PRI | NULL    |       |
-| card     | longtext    | YES  |     | NULL    |       |
-| reason   | longtext    | YES  |     | NULL    |       |
-| reason2  | longtext    | YES  |     | NULL    |       |
-| discard  | longtext    | YES  |     | NULL    |       |
-| No.  | int(10)    | YES  |     | NULL    |       |
-| active  | varchar(50)    | YES  |     | NULL    |       |
-+----------+-------------+------+-----+---------+-------+
++------------+-------------+------+-----+---------------------+-------------------------------+
+| Field      | Type        | Null | Key | Default             | Extra                         |
++------------+-------------+------+-----+---------------------+-------------------------------+
+| username   | varchar(50) | NO   | PRI | NULL                |                               |
+| card       | longtext    | YES  |     | NULL                |                               |
+| reason     | longtext    | YES  |     | NULL                |                               |
+| reason2    | longtext    | YES  |     | NULL                |                               |
+| discard    | longtext    | YES  |     | NULL                |                               |
+| No.        | int(10)     | YES  |     | NULL                |                               |
+| active     | varchar(50) | YES  |     | NULL                |                               |
+| updated_at | timestamp   | NO   |     | current_timestamp() | on update current_timestamp() |
++------------+-------------+------+-----+---------------------+-------------------------------+
