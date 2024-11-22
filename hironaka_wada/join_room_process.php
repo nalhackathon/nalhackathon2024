@@ -6,7 +6,7 @@ $username = $_SESSION['username'] ?? '';
 
 // エラーチェック
 if (empty($username)) {
-    echo "<script>alert('ユーザー名が設定されていません。タイトル画面に戻ってください。'); window.location.href = 'index.php';</script>";
+    echo "<script>alert('ユーザー名が設定されていません。'); window.location.href = 'lobby';</script>";
     exit;
 }
 
@@ -15,7 +15,7 @@ $room_id = $_POST['room_id'];
 
 try {
     // `room`テーブルで指定されたルームIDの存在を確認
-    $stmt = $db->prepare("SELECT roomID, participant FROM room2 WHERE roomID = :room_id");
+    $stmt = $db->prepare("SELECT roomID, participant FROM room WHERE roomID = :room_id");
     $stmt->execute([':room_id' => $room_id]);
     $room = $stmt->fetch(PDO::FETCH_ASSOC);
     $participant = explode(",", $room['participant']);
@@ -39,7 +39,7 @@ try {
                 ? $room['participant'] . ',' . $username 
                 : $username;
             
-            $stmt = $db->prepare("UPDATE room2 SET participant = :participant WHERE roomID = :room_id");
+            $stmt = $db->prepare("UPDATE room SET participant = :participant WHERE roomID = :room_id");
             $stmt->execute([':participant' => $updatedParticipants, ':room_id' => $room_id]);
 
             // ゲームIDをセッションに保存
@@ -61,7 +61,7 @@ try {
         }
         
     } else {
-        echo "<script>alert('ルームが見つかりません。'); window.location.href = 'index.php';</script>";
+        echo "<script>alert('ルームが見つかりません。'); window.location.href = 'join_room.php';</script>";
     }
 } catch (PDOException $e) {
     echo "エラーが発生しました: " . $e->getMessage();

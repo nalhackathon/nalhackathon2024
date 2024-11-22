@@ -15,18 +15,15 @@ if (empty($room_id)) {
 }
 
 // POSTリクエストからルームstateを取得
-$player = $_POST['game_id'];
+$player = $_POST['player_id'];
 
 try {
-    // `room2`テーブルで指定されたルームIDの存在を確認
-    $stmt = $db->prepare("SELECT roomID, participant FROM room2 WHERE roomID = :room_id");
+    // `room`テーブルで指定されたルームIDの存在を確認
+    $stmt = $db->prepare("SELECT roomID, participant FROM room WHERE roomID = :room_id");
     $stmt->execute([':room_id' => $room_id]);
     $room = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($room) {
-        // stateの"wait"を"active"に変更
-        $stmt = $db->prepare("UPDATE room2 SET state = :state WHERE roomID = :room_id");
-        $stmt->execute([':state' => "active", ':room_id' => $room_id]);
 
         // ゲームID、プレイヤーIDをセッションに保存
         $_SESSION['game_id'] = $room['roomID'];

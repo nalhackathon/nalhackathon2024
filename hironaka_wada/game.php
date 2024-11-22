@@ -6,16 +6,19 @@ require_once 'db.php';
 $game_id = $_SESSION['game_id'] ?? null;
 $player_id = $_SESSION['player_id'] ?? null;
 
+// ゲームIDとプレイヤーIDが存在するかの確認
 if (!$game_id || !$player_id) {
-    echo "ルームまたはプレイヤーが存在していません。";
-    exit;
+    "<script>
+        alert('ルームまたはプレイヤーが設定されていません。;
+        window.location.href = 'lobby.php';
+    </script>";
 }
 
 // ルーム作成者（ホスト）の取得
-$stmt = $db->prepare("SELECT creater FROM room2 WHERE roomID = :game_id");
+$stmt = $db->prepare("SELECT creater FROM room WHERE roomID = :game_id");
 $stmt->execute([':game_id' => $game_id]);
 $room = $stmt->fetch(PDO::FETCH_ASSOC);
-$host = $stmt->fetch(PDO::FETCH_ASSOC)['creater'] ?? null;
+$host = $room['creater'] ?? null;
 
 // クライアントからのfetchリクエストかどうかを判別
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fetch_players'])) {
@@ -31,10 +34,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fetch_players'])) {
                 $player['name'] .= " (ホスト)";
             }
         }
-
         echo json_encode(['status' => 'success', 'players' => $players]);
 
 
+    } catch (PDOException $e) {
+        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// 参加者状態をチェックするAPI
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check_room'])) {
+    try {
+        $stmt = $db->prepare("SELECT participant FROM room WHERE roomID = :game_id");
+        $stmt->execute([':game_id' => $game_id]);
+        $room = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($room['participant'] === null) {
+            echo json_encode(['status' => 'empty']);
+        } else {
+            echo json_encode(['status' => 'active']);
+        }
     } catch (PDOException $e) {
         echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
     }
@@ -64,46 +84,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fetch_players'])) {
 
     <!-- ゲーム開始ボタン -->
     <form action="change_room_state.php" method="post">
-        <button type="submit" value="<?php echo $player_id; ?>" name="game_id">ゲーム開始</button>
+        <button type="submit" value="<?php echo $player_id; ?>" name="player_id">ゲーム開始</button>
     </form>
 
-    <a href="join_room.php">ルーム一覧に戻る</a>
-    </body>
+    <!-- ルーム削除ボタン(ホストのみ) -->
+    <?php if($player_id === $host): ?>
+        <form action="delete_room.php" method="post">
+            <button type="submit" value="<?php echo $player_id; ?>" name="player_id">ルーム削除</button>
+        </form>
+    <?php endif; ?>
 
-    <script>
+    <!-- 退出ボタン(ホスト以外) -->
+    <?php if($player_id != $host): ?>
+        <form action="quit_room.php" method="post">
+            <button type="submit" value="<?php echo $player_id; ?>" name="player_id">退出する</button>
+        </form>
+    <?php endif; ?>
+
+</body>
+
+<script>
+    function fetchPlayers() {
         const gameId = <?php echo json_encode($game_id); ?>;
-
-        // プレイヤーリストを取得して表示する関数
-        function fetchPlayers() {
-            fetch('game.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'fetch_players=true'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    const playerList = document.getElementById('player-list');
-                    playerList.innerHTML = '';  // リストをクリア
+        fetch('game.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'fetch_players=true'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const playerList = document.getElementById('player-list');
+                if (playerList) {
+                    playerList.innerHTML = '';  // Clear the list
                     data.players.forEach(player => {
                         const listItem = document.createElement('li');
                         listItem.textContent = player.name;
                         playerList.appendChild(listItem);
                     });
-                } else {
-                    console.error("Error fetching players:", data.message);
                 }
-            })
-            .catch(error => console.error('Fetch error:', error));
+            } else {
+                const errorMsg = document.getElementById('error-message');
+                if (errorMsg) {
+                    errorMsg.textContent = "エラー: プレイヤーリストの取得に失敗しました。";
+                }
+            }
+        })
+        .catch(error => {
+            const errorMsg = document.getElementById('error-message');
+            if (errorMsg) {
+                errorMsg.textContent = "通信エラーが発生しました。";
+            }
+            console.error('Fetch error:', error);
+        });
+    }
+
+    function checkRoom() {
+        fetch('game.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'check_room=true'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'empty') {
+                alert('参加者がいません。ロビーに戻ります。');
+                window.location.href = 'lobby.php';
+            }
+        })
+        .catch(error => {
+            console.error('チェックエラー:', error);
+        });
+    }
+
+    // ページがアクティブな場合のみリストを更新
+    let isActive = true;
+    window.addEventListener('focus', () => isActive = true);
+    window.addEventListener('blur', () => isActive = false);
+
+    function fetchPlayersPeriodically() {
+        if (isActive) {
+            fetchPlayers();
+            checkRoom(); // Include room check
         }
+        setTimeout(fetchPlayersPeriodically, 5000); // Continue the loop
+    }
 
-        
+    fetchPlayersPeriodically(); // Start periodic updates
+</script>
 
-        // 5秒ごとにプレイヤーリストを更新
-        setInterval(fetchPlayers, 5000);
-        fetchPlayers(); // 初回のリスト表示
-
-        
-    </script>
 </body>
 </html>

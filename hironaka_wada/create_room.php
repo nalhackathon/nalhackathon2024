@@ -19,8 +19,10 @@ try {
     $stmt->execute([':game_id' => $game_id]);
 
     // `room`テーブルに新しいルームを作成し、作成者情報を保存
-    $stmt = $db->prepare("INSERT INTO room2 (roomID, creater, participant, state) VALUES (:room_id, :creater, :creater, :state)");
-    $stmt->execute([':room_id' => $game_id, ':creater' => $username, ':state' => "wait"]);
+    // $stmt = $db->prepare("INSERT INTO room (roomID, creater, participant, state) VALUES (:room_id, :creater, :creater, :state)");
+    // $stmt->execute([':room_id' => $game_id, ':creater' => $username, ':state' => "wait"]);
+    $stmt = $db->prepare("INSERT INTO room (roomID, creater, participant) VALUES (:room_id, :creater, :creater)");
+    $stmt->execute([':room_id' => $game_id, ':creater' => $username]);
 
     // `players`テーブルに作成者を追加
     $stmt = $db->prepare("INSERT INTO players (game_id, name) VALUES (:game_id, :name)");
